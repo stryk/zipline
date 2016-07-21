@@ -410,9 +410,6 @@ class TradingAlgorithm(object):
         # target/delta of the capital changes, along with values
         self.capital_changes = kwargs.pop('capital_changes', {})
 
-        # A dictionary of the actual capital change deltas, keyed by timestamp
-        self.capital_change_deltas = {}
-
     def init_engine(self, get_loader):
         """
         Construct and store a PipelineEngine from loader.
@@ -853,9 +850,19 @@ class TradingAlgorithm(object):
                       "('target' or 'delta')" % capital_change)
             return
 
-        self.capital_change_deltas.update({dt: capital_change_amount})
         self.perf_tracker.process_capital_change(capital_change_amount,
                                                  is_interday)
+
+        packet = {
+            'capital_change': {
+                'date': dt,
+                'type': 'cash',
+                'target': capital_change['value'] if
+                capital_change['type'] == 'target' else None,
+                'delta': capital_change_amount
+            }
+        }
+        return packet
 
     @api_method
     def get_environment(self, field='platform'):
